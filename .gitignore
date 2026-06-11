@@ -1,0 +1,15 @@
+data/
+outputs/
+checkpoints/
+__pycache__/
+.cache/
+.venv/
+*.py[cod]
+*.sqlite
+*.db
+*.faiss
+*.npz
+*.pt
+*.bin
+*.safetensors
+.env

@@ -1,0 +1,24 @@
+domain: "biomedical_qa"
+paths:
+  kb_dir: "data/kb_vi"
+  train_path: "data/processed_vi/bioasq_vi.jsonl"
+  test_path: "data/processed_vi/bioasq_vi.jsonl"
+  hallucination_path: "data/benchmarks/hallucination_vi.jsonl"
+  vectorstore_dir: "outputs/vectorstore_vi"
+  predictions_dir: "outputs/predictions"
+rag:
+  chunk_size: 512
+  chunk_overlap: 64
+  embedding_model: "intfloat/multilingual-e5-base"
+  top_k: 5
+  hybrid_alpha: 0.55
+llm:
+  base_model: "Qwen/Qwen2.5-1.5B-Instruct"
+  max_new_tokens: 256
+  temperature: 0.2
+hallucination_detection:
+  baseline_threshold: 0.68
+  candidate_encoder_models:
+    - "vinai/phobert-base-v2"
+    - "FPTAI/velectra-base-discriminator-cased"
+    - "answerdotai/ModernBERT-base"
