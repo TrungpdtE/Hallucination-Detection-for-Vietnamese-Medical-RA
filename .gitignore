@@ -17,3 +17,4 @@ docs/
 docs/human_eval_template.md
 docs/PROJECT_PLAN.md
 run.txt
+.gitignore
