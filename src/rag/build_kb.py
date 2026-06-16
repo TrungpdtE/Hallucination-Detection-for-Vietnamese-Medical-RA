@@ -44,7 +44,7 @@ def main():
     embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
         model_name=args.embedding
     )
-    collection = client.get_or_create_collection(name="kb", embedding_function=embed_fn)
+    collection = client.get_or_create_collection(name="medical_kb", embedding_function=embed_fn)
 
     ids, texts, metas = [], [], []
     for filename, content in tqdm(docs, desc="Chunking"):
@@ -54,7 +54,15 @@ def main():
             texts.append(chunk)
             metas.append({"source": filename, "chunk_id": idx})
 
-    collection.add(ids=ids, documents=texts, metadatas=metas)
+    max_batch_size = client.max_batch_size
+
+    for i in range(0, len(ids), max_batch_size):
+        collection.add(
+            ids=ids[i:i+max_batch_size],
+            documents=texts[i:i+max_batch_size],
+            metadatas=metas[i:i+max_batch_size]
+        )
+
     print(f"Indexed {len(ids)} chunks")
 
 
