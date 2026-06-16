@@ -1,0 +1,5 @@
+# Optional QLoRA dependencies.
+# Best installed on Colab/Linux GPU, not required for the local demo.
+-r requirements.txt
+peft>=0.12.0,<1.0.0
+bitsandbytes>=0.43.1

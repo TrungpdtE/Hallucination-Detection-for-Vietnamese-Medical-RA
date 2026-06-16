@@ -1,0 +1,6 @@
+# Optional RAG/vector-store dependencies.
+# Install only when building/querying the vector store.
+-r requirements.txt
+sentence-transformers>=3.0.0,<4.0.0
+chromadb==0.5.5
+faiss-cpu>=1.8.0,<2.0.0

@@ -1,0 +1,407 @@
+# Lộ trình commit gợi ý cho GitHub
+
+File này giúp chia project `rag-llm-vietnamese` thành nhiều commit nhỏ, có tiến trình phát triển rõ ràng như một project RAG/NLP được làm từng bước.
+
+Repo này đã có sẵn nhiều file và data. Vì vậy cách làm hợp lý là commit theo từng nhóm chức năng, không commit một lần toàn bộ source.
+
+## Nguyên tắc trước khi commit
+
+Kiểm tra trạng thái repo:
+
+```bash
+git status
+```
+
+Không nên commit các file cache:
+
+```text
+__pycache__/
+*.pyc
+```
+
+Nếu thấy cache Python đang xuất hiện, dọn bằng:
+
+```bash
+find src -name __pycache__ -type d -prune -exec rm -rf {} +
+```
+
+Nếu data quá lớn, cân nhắc chỉ commit sample/benchmark nhỏ và đưa dataset lớn lên Google Drive hoặc HuggingFace Hub.
+
+## Commit 1: Khởi tạo cấu trúc project RAG tiếng Việt
+
+Files:
+
+```text
+README.md
+requirements.txt
+.gitignore
+src/config.yaml
+```
+
+Command:
+
+```bash
+git add README.md requirements.txt .gitignore src/config.yaml
+git commit -m "Initialize Vietnamese medical RAG project structure"
+```
+
+Ý nghĩa:
+
+```text
+Tạo nền project: mô tả mục tiêu, dependency, config domain y tế tiếng Việt, cấu trúc thư mục dữ liệu và output.
+```
+
+## Commit 2: Thêm pipeline chuẩn bị dataset
+
+Files:
+
+```text
+src/data/prepare_dataset.py
+src/utils/jsonl.py
+```
+
+Command:
+
+```bash
+git add src/data/prepare_dataset.py src/utils/jsonl.py
+git commit -m "Add dataset preparation and JSONL utilities"
+```
+
+Ý nghĩa:
+
+```text
+Chuẩn hóa dữ liệu QA sang JSONL để dùng chung cho training, retrieval evaluation và benchmark hallucination.
+```
+
+## Commit 3: Thêm knowledge base và dữ liệu Vietnamese QA
+
+Files gợi ý:
+
+```text
+data/kb_vi/
+data/processed_vi/bioasq_vi.jsonl
+data/processed_vi/kb_map.jsonl
+```
+
+Command:
+
+```bash
+git add data/kb_vi data/processed_vi/bioasq_vi.jsonl data/processed_vi/kb_map.jsonl
+git commit -m "Add Vietnamese medical knowledge base and QA data"
+```
+
+Ý nghĩa:
+
+```text
+Thêm dữ liệu nền cho hệ thống: tài liệu y tế tiếng Việt và QA pairs để build RAG/evaluation.
+```
+
+Ghi chú:
+
+```text
+Nếu folder data quá lớn, thay commit này bằng data sample + link dataset trong README.
+```
+
+## Commit 4: Thêm vector store builder cho RAG
+
+Files:
+
+```text
+src/rag/build_kb.py
+```
+
+Command:
+
+```bash
+git add src/rag/build_kb.py
+git commit -m "Add vector store builder for medical knowledge base"
+```
+
+Ý nghĩa:
+
+```text
+Chunk tài liệu, sinh embedding và lưu vector store để phục vụ truy xuất top-k context.
+```
+
+## Commit 5: Thêm dense RAG query pipeline
+
+Files:
+
+```text
+src/rag/query_rag.py
+```
+
+Command:
+
+```bash
+git add src/rag/query_rag.py
+git commit -m "Add dense retrieval RAG query pipeline"
+```
+
+Ý nghĩa:
+
+```text
+Hoàn thiện flow RAG cơ bản: nhận câu hỏi, retrieve context từ vector store, dựng prompt và gọi LLM sinh câu trả lời.
+```
+
+## Commit 6: Thêm hybrid retriever BM25 + dense fusion
+
+Files:
+
+```text
+src/rag/hybrid_retriever.py
+src/config.yaml
+```
+
+Command:
+
+```bash
+git add src/rag/hybrid_retriever.py src/config.yaml
+git commit -m "Add hybrid BM25 and dense retriever"
+```
+
+Ý nghĩa:
+
+```text
+Nâng retrieval từ dense-only sang hybrid retrieval. BM25 giữ exact medical terms/numbers, dense retrieval giữ semantic matching.
+```
+
+## Commit 7: Thêm evaluation metrics cho answer và retrieval
+
+Files:
+
+```text
+src/eval/evaluate_metrics.py
+src/eval/evaluate_retrieval.py
+```
+
+Command:
+
+```bash
+git add src/eval/evaluate_metrics.py src/eval/evaluate_retrieval.py
+git commit -m "Add answer and retrieval evaluation scripts"
+```
+
+Ý nghĩa:
+
+```text
+Đánh giá hệ thống bằng BLEU/ROUGE/BERTScore và retrieval Recall@K thay vì chỉ demo chatbot.
+```
+
+## Commit 8: Thêm hallucination benchmark generator
+
+Files:
+
+```text
+src/eval/create_hallucination_benchmark.py
+src/eval/hallucination_input.py
+data/benchmarks/hallucination_vi.jsonl
+```
+
+Command:
+
+```bash
+git add src/eval/create_hallucination_benchmark.py src/eval/hallucination_input.py data/benchmarks/hallucination_vi.jsonl
+git commit -m "Add Vietnamese hallucination benchmark generation"
+```
+
+Ý nghĩa:
+
+```text
+Tạo benchmark dạng question + context + answer -> supported/hallucinated để đo độ tin cậy của RAG.
+```
+
+## Commit 9: Thêm baseline hallucination detector
+
+Files:
+
+```text
+src/eval/hallucination_baselines.py
+src/eval/metrics.py
+outputs/predictions/hallucination_baseline.jsonl
+```
+
+Command:
+
+```bash
+git add src/eval/hallucination_baselines.py src/eval/metrics.py outputs/predictions/hallucination_baseline.jsonl
+git commit -m "Add rule based hallucination detection baseline"
+```
+
+Ý nghĩa:
+
+```text
+Tạo baseline kiểm tra overlap, number consistency và dấu hiệu unsupported claim trước khi fine-tune model phức tạp hơn.
+```
+
+## Commit 10: Thêm fine-tuning script cho LLM bằng QLoRA
+
+Files:
+
+```text
+src/finetune/qlora_train.py
+```
+
+Command:
+
+```bash
+git add src/finetune/qlora_train.py
+git commit -m "Add QLoRA fine tuning script for Vietnamese medical QA"
+```
+
+Ý nghĩa:
+
+```text
+Chuẩn bị fine-tuning LLM nhỏ trên Colab/limited GPU để so sánh base LLM vs fine-tuned LLM.
+```
+
+## Commit 11: Thêm Transformer hallucination judge
+
+Files:
+
+```text
+src/finetune/train_hallucination_detector.py
+src/eval/predict_hallucination_transformer.py
+```
+
+Command:
+
+```bash
+git add src/finetune/train_hallucination_detector.py src/eval/predict_hallucination_transformer.py
+git commit -m "Add transformer based hallucination detector training"
+```
+
+Ý nghĩa:
+
+```text
+Fine-tune encoder như PhoBERT để phân loại answer có được context support hay không.
+```
+
+## Commit 12: Thêm report generation và biểu đồ
+
+Files:
+
+```text
+src/eval/generate_report.py
+reports/hallucination_report.md
+reports/confusion_baseline.png
+reports/hallucination_types.png
+reports/metric_comparison.png
+```
+
+Command:
+
+```bash
+git add src/eval/generate_report.py reports/hallucination_report.md reports/confusion_baseline.png reports/hallucination_types.png reports/metric_comparison.png
+git commit -m "Add hallucination evaluation report and visualizations"
+```
+
+Ý nghĩa:
+
+```text
+Biến kết quả thử nghiệm thành report có thể đọc trên GitHub: metric, confusion matrix, error type distribution.
+```
+
+## Commit 13: Thêm Streamlit demo
+
+Files:
+
+```text
+src/demo/app.py
+```
+
+Command:
+
+```bash
+git add src/demo/app.py
+git commit -m "Add Streamlit demo for Vietnamese medical RAG"
+```
+
+Ý nghĩa:
+
+```text
+Tạo demo để nhập câu hỏi, xem context truy xuất, answer, citation và cảnh báo hallucination.
+```
+
+## Commit 14: Thêm project plan và human evaluation template
+
+Files:
+
+```text
+docs/PROJECT_PLAN.md
+docs/human_eval_template.md
+```
+
+Command:
+
+```bash
+git add docs/PROJECT_PLAN.md docs/human_eval_template.md
+git commit -m "Add research plan and human evaluation template"
+```
+
+Ý nghĩa:
+
+```text
+Thể hiện project có hướng nghiên cứu rõ: dataset, experiment phases, human eval và tiêu chí đánh giá.
+```
+
+## Commit 15: Cập nhật README cuối cùng
+
+Files:
+
+```text
+README.md
+commit.txt
+```
+
+Command:
+
+```bash
+git add README.md commit.txt
+git commit -m "Document Vietnamese medical RAG reliability lab"
+```
+
+Ý nghĩa:
+
+```text
+Hoàn thiện README cho GitHub: mục tiêu, kiến trúc, commands, milestone, interview talking points và cách chạy.
+```
+
+## Kiểm tra trước khi push
+
+Chạy nhanh các lệnh kiểm tra nhẹ:
+
+```bash
+python -m py_compile src/rag/hybrid_retriever.py
+python -m py_compile src/eval/hallucination_baselines.py
+python -m py_compile src/eval/generate_report.py
+```
+
+Nếu đã build vector store:
+
+```bash
+python -m src.rag.hybrid_retriever \
+  --kb_dir data/kb_vi \
+  --vectorstore outputs/vectorstore_vi \
+  --question "Bệnh Hirschsprung là rối loạn đơn gen hay đa yếu tố?" \
+  --top_k 5
+```
+
+## Push lên GitHub
+
+```bash
+git branch -M main
+git remote add origin https://github.com/<your-username>/rag-llm-vietnamese.git
+git push -u origin main
+```
+
+## Ghi chú về commit data lớn
+
+Nếu GitHub báo file quá lớn:
+
+```text
+1. Không commit data.zip hoặc checkpoint model.
+2. Đưa dataset/checkpoint lên HuggingFace Hub hoặc Google Drive.
+3. README ghi rõ link tải data và cách đặt vào thư mục data/.
+4. Commit code + sample nhỏ + benchmark/report là đủ đẹp cho CV.
+```
