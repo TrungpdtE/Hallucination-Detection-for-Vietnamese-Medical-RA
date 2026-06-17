@@ -1,3 +1,7 @@
+import os
+os.environ["CHROMA_TELEMETRY_DISABLED"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
 import argparse
 import random
 import re
@@ -24,6 +28,35 @@ NEGATIONS = [
     (" decreases ", " increases "),
 ]
 
+ENTITY_REPLACEMENTS = [
+    ("trastuzumab", "tamoxifen"),
+    ("tamoxifen", "trastuzumab"),
+    ("aspirin", "warfarin"),
+    ("warfarin", "aspirin"),
+    ("insulin", "metformin"),
+    ("metformin", "insulin"),
+    ("ung thư vú", "ung thư phổi"),
+    ("ung thư phổi", "ung thư vú"),
+    ("bệnh nhân", "người khỏe mạnh"),
+    ("phụ nữ", "nam giới"),
+]
+
+TEMPORAL_REPLACEMENTS = [
+    ("trước", "sau"),
+    ("sau", "trước"),
+    ("cấp tính", "mạn tính"),
+    ("mạn tính", "cấp tính"),
+    ("ngắn hạn", "dài hạn"),
+    ("dài hạn", "ngắn hạn"),
+]
+
+UNSUPPORTED_CLAIMS = [
+    " Điều này chứng minh phương pháp điều trị luôn an toàn tuyệt đối.",
+    " Tài liệu cũng khuyến cáo tăng gấp đôi liều cho mọi bệnh nhân.",
+    " Kết luận này áp dụng cho cả trẻ em và phụ nữ mang thai.",
+    " Không cần theo dõi thêm sau khi bắt đầu điều trị.",
+]
+
 
 def read_doc(kb_dir: str, filename: str) -> str:
     path = Path(kb_dir) / filename
@@ -39,24 +72,64 @@ def short_context(text: str, max_chars: int) -> str:
 
 def corrupt_answer(answer: str, rng: random.Random) -> Tuple[str, str]:
     padded = f" {answer} "
-    candidates = [(src, tgt) for src, tgt in NEGATIONS if src in padded]
-    if candidates:
-        src, tgt = rng.choice(candidates)
-        return padded.replace(src, tgt, 1).strip(), f"replace:{src.strip()}->{tgt.strip()}"
+    strategies = []
+
+    negations = [(src, tgt) for src, tgt in NEGATIONS if src in padded]
+    if negations:
+        strategies.append("negation")
+
+    entities = [(src, tgt) for src, tgt in ENTITY_REPLACEMENTS if src.lower() in answer.lower()]
+    if entities:
+        strategies.append("entity_replacement")
+
+    temporals = [(src, tgt) for src, tgt in TEMPORAL_REPLACEMENTS if src in answer.lower()]
+    if temporals:
+        strategies.append("temporal_contradiction")
 
     numbers = re.findall(r"\d+(?:[.,]\d+)?", answer)
     if numbers:
+        strategies.append("number_shift")
+        strategies.append("dosage_modification")
+
+    tokens = answer.split()
+    if len(tokens) > 8:
+        strategies.append("entity_or_phrase_drop")
+
+    strategies.append("unsupported_append")
+    strategy = rng.choice(strategies)
+
+    if strategy == "negation":
+        src, tgt = rng.choice(negations)
+        return padded.replace(src, tgt, 1).strip(), f"replace:{src.strip()}->{tgt.strip()}"
+
+    if strategy == "entity_replacement":
+        src, tgt = rng.choice(entities)
+        return re.sub(re.escape(src), tgt, answer, count=1, flags=re.IGNORECASE), f"entity:{src}->{tgt}"
+
+    if strategy == "temporal_contradiction":
+        src, tgt = rng.choice(temporals)
+        return re.sub(re.escape(src), tgt, answer, count=1, flags=re.IGNORECASE), f"temporal:{src}->{tgt}"
+
+    if strategy == "number_shift":
         n = rng.choice(numbers)
         replacement = str(int(float(n.replace(",", "."))) + rng.choice([1, 2, 5]))
         return answer.replace(n, replacement, 1), "number_shift"
 
-    tokens = answer.split()
-    if len(tokens) > 8:
+    if strategy == "dosage_modification":
+        n = rng.choice(numbers)
+        try:
+            value = float(n.replace(",", "."))
+            replacement = str(max(1, int(round(value * rng.choice([2, 3, 10])))))
+        except ValueError:
+            replacement = str(int(float(n.replace(",", "."))) + 10)
+        return answer.replace(n, replacement, 1), "dosage_modification"
+
+    if strategy == "entity_or_phrase_drop":
         drop_at = rng.randrange(0, len(tokens) - 3)
         del tokens[drop_at : drop_at + 3]
         return " ".join(tokens), "entity_or_phrase_drop"
 
-    return answer + " Thông tin này không được nêu trong tài liệu.", "unsupported_append"
+    return answer + rng.choice(UNSUPPORTED_CLAIMS), "unsupported_append"
 
 
 def build_examples(rows: Iterable[Dict], kb_dir: str, max_context_chars: int, seed: int) -> List[Dict]:

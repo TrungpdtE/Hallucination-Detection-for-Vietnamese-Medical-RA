@@ -1,4 +1,7 @@
 import os
+os.environ["CHROMA_TELEMETRY_DISABLED"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
 import sys
 from pathlib import Path
 
@@ -17,7 +20,7 @@ from src.utils.jsonl import read_jsonl
 BENCHMARK_PATH = ROOT / "data/benchmarks/hallucination_vi.jsonl"
 BASELINE_PATH = ROOT / "outputs/predictions/hallucination_baseline.jsonl"
 PHOBERT_PATH = ROOT / "outputs/predictions/phobert_hallucination_detector.jsonl"
-PHOBERT_MODEL_DIR = ROOT / "outputs/models/phobert_hallucination_detector"
+PHOBERT_MODEL_DIR = ROOT / "outputs/models/phobert_smoke"
 
 
 st.set_page_config(page_title="Vietnamese Medical RAG Reliability", layout="wide")
@@ -45,10 +48,14 @@ def phobert_predict(row):
     import torch
 
     tokenizer, model, device = load_phobert_model(str(PHOBERT_MODEL_DIR))
+    max_len = min(
+        tokenizer.model_max_length,
+        model.config.max_position_embeddings - 2
+    )
     inputs = tokenizer(
         format_hallucination_input(row),
         truncation=True,
-        max_length=512,
+        max_length=max_len,
         padding=True,
         return_tensors="pt",
     ).to(device)
@@ -72,7 +79,7 @@ def metrics_frame(rows, system_name):
 
 
 st.title("Vietnamese Medical RAG Reliability Lab")
-st.caption("Hallucination detection dashboard for Vietnamese medical RAG: context + question + answer -> supported or hallucinated.")
+st.caption("Hallucination detection dashboard for Vietnamese medical RAG: question + answer + context -> supported or hallucinated.")
 
 benchmark_rows = load_rows(str(BENCHMARK_PATH))
 baseline_rows = load_rows(str(BASELINE_PATH))

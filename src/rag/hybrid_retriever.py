@@ -1,7 +1,11 @@
+import os
+os.environ["CHROMA_TELEMETRY_DISABLED"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 import argparse
 import json
 import math
-import os
 import re
 from collections import Counter, defaultdict
 from typing import Dict, List, Tuple
@@ -70,7 +74,7 @@ def minmax(scores: List[Tuple[str, float]]) -> Dict[str, float]:
 def dense_scores(vectorstore: str, embedding: str, query: str, top_k: int) -> List[Tuple[str, float]]:
     client = chromadb.PersistentClient(path=vectorstore)
     embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(model_name=embedding)
-    collection = client.get_collection(name="kb", embedding_function=embed_fn)
+    collection = client.get_collection(name="medical_kb", embedding_function=embed_fn)
     result = collection.query(query_texts=[query], n_results=top_k)
     ids = result.get("ids", [[]])[0]
     distances = result.get("distances", [[]])[0]

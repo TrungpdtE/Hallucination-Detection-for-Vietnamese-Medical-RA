@@ -1,7 +1,9 @@
+import os
+os.environ["CHROMA_TELEMETRY_DISABLED"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
 import argparse
 import json
-import os
-
 import chromadb
 from chromadb.utils import embedding_functions
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -43,7 +45,7 @@ def main():
     embed_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
         model_name=args.embedding
     )
-    collection = client.get_collection(name="kb", embedding_function=embed_fn)
+    collection = client.get_collection(name="medical_kb", embedding_function=embed_fn)
 
     tokenizer, model = load_model(args.model)
 
