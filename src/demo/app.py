@@ -20,7 +20,9 @@ from src.utils.jsonl import read_jsonl
 BENCHMARK_PATH = ROOT / "data/benchmarks/hallucination_vi.jsonl"
 BASELINE_PATH = ROOT / "outputs/predictions/hallucination_baseline.jsonl"
 PHOBERT_PATH = ROOT / "outputs/predictions/phobert_hallucination_detector.jsonl"
-PHOBERT_MODEL_DIR = ROOT / "outputs/models/phobert_smoke"
+PHOBERT_MODEL_DIR = ROOT / "outputs/models/hallucination_detector"
+if not PHOBERT_MODEL_DIR.exists():
+    PHOBERT_MODEL_DIR = ROOT / "outputs/models/phobert_smoke"
 
 
 st.set_page_config(page_title="Vietnamese Medical RAG Reliability", layout="wide")
