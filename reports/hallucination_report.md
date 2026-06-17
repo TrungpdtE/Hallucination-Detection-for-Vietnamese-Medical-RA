@@ -4,28 +4,30 @@
 
 This report evaluates hallucination detection on the Vietnamese medical RAG benchmark. The task is binary classification:
 
-`question + context + answer -> supported | hallucinated`
+`question + answer + context -> supported | hallucinated`
 
 
-PhoBERT results are not available yet. Train and predict with `src/finetune/train_hallucination_detector.py` and `src/eval/predict_hallucination_transformer.py` to create `outputs/predictions/phobert_hallucination_detector.jsonl`.
+PhoBERT improves macro-F1 by **+0.3684** over the lexical/number baseline.
 
 ## Metrics
 
 | System | Accuracy | Macro-F1 | Supported F1 | Hallucinated F1 | N |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Baseline | 0.5323 | 0.4576 | 0.6589 | 0.2563 | 6588 |
+| Baseline | 0.5299 | 0.4347 | 0.6667 | 0.2028 | 6588 |
+| PhoBERT | 0.8078 | 0.8032 | 0.8334 | 0.7730 | 6588 |
 
 ## Charts
 
 ![metric_comparison](metric_comparison.png)
 ![confusion_baseline](confusion_baseline.png)
+![confusion_phobert](confusion_phobert.png)
 ![hallucination_types](hallucination_types.png)
 
 ## Interpretation
 
 - The baseline uses lexical overlap, number consistency, and bag-of-words similarity. It is intentionally cheap and explains obvious failures.
-- PhoBERT is the main Transformer judge. It should improve recall for hallucinated answers because it can model the full question-context-answer relation rather than only token overlap.
-- The benchmark includes controlled hallucinations such as negation flips, number shifts, phrase drops, and unsupported appended claims.
+- PhoBERT is the main Transformer judge. It should improve recall for hallucinated answers because it can model the full question-answer-context relation rather than only token overlap.
+- The benchmark includes controlled hallucinations such as negation flips, entity replacements, number shifts, dosage changes, temporal contradictions, phrase drops, and unsupported appended claims.
 
 ## Next Experiment
 

@@ -1,5 +1,8 @@
-import argparse
 import os
+os.environ["CHROMA_TELEMETRY_DISABLED"] = "1"
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+import argparse
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -131,7 +134,7 @@ def write_report(
 
 This report evaluates hallucination detection on the Vietnamese medical RAG benchmark. The task is binary classification:
 
-`question + context + answer -> supported | hallucinated`
+`question + answer + context -> supported | hallucinated`
 
 {delta}
 ## Metrics
@@ -145,8 +148,8 @@ This report evaluates hallucination detection on the Vietnamese medical RAG benc
 ## Interpretation
 
 - The baseline uses lexical overlap, number consistency, and bag-of-words similarity. It is intentionally cheap and explains obvious failures.
-- PhoBERT is the main Transformer judge. It should improve recall for hallucinated answers because it can model the full question-context-answer relation rather than only token overlap.
-- The benchmark includes controlled hallucinations such as negation flips, number shifts, phrase drops, and unsupported appended claims.
+- PhoBERT is the main Transformer judge. It should improve recall for hallucinated answers because it can model the full question-answer-context relation rather than only token overlap.
+- The benchmark includes controlled hallucinations such as negation flips, entity replacements, number shifts, dosage changes, temporal contradictions, phrase drops, and unsupported appended claims.
 
 ## Next Experiment
 
