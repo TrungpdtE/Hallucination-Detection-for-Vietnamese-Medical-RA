@@ -1,4 +1,5 @@
 # Hallucination Detection for Vietnamese Medical RAG Systems
+# Do cái hệ thống làm CV nó ko hiện hết link repo nên đã cắn mất "G Systems" nên đành phải rename lại để link trong CV hoạt động được. 
 
 Hệ thống hỏi đáp y tế tiếng Việt dựa trên Retrieval-Augmented Generation (RAG), kết hợp một tầng kiểm chứng hậu sinh (post-generation verification) bằng PhoBERT để phát hiện câu trả lời có được ngữ cảnh hỗ trợ hay không.
 
